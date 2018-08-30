@@ -1,5 +1,6 @@
 #include "dir.h"
 
+
 //Returns Absolute Path
 char * get_path (char path[]){
 	char *abs_path=NULL;
@@ -58,29 +59,24 @@ int close_dir(DIR * dir){
 }	
 
 //List Directory-Files list
-int print_dir(DIR * dir,char * path){	
+void print_dir(DIR * dir,char * path){
 	struct dirent * dir_struct;
+	
 	char * temp=NULL;
-	file_data temp_struct;
-	//printf("%s\n",path);
+	printf("%s\n",path);
 	//struct  winsize w = get_termsize();
 	//for(int i=0;i<w.ws_col;i++)
-	//printf("\033[0G------------------------------------------\n\033[1B");
+	printf("\033[0G------------------------------------\n\033[1B\n");
 	fflush(stdout);
 	printf("\033[0G");
 	printf("\0337");
-	printf("\033[0G\033[7h.");
-	temp_struct.name=".";
+	printf("\033[0G.");
 	temp=get_path(".");
-	temp_struct=print_details(temp,temp_struct);
-	files_list.push_back(temp_struct);
-    printf("\033[0G\033[7h..");
-    temp_struct.name="..";
-	temp=get_path("..");
-	temp_struct=print_details(temp,temp_struct);
-	files_list.push_back(temp_struct);
+	print_details(temp);
+    printf("\033[0G..");
+    temp=get_path("..");
+    print_details(temp);
     fflush(stdout);
-    int file_count=2;
  	while ((dir_struct = readdir(dir))) 
     {
          if (!strcmp (dir_struct->d_name, ".")){
@@ -89,89 +85,60 @@ int print_dir(DIR * dir,char * path){
          if (!strcmp (dir_struct->d_name, "..")){
             continue;
          }
-         if(dir_struct->d_name[0]=='.')  //Not displaying hidden files
+         if(dir_struct->d_name[0]=='.')
             continue;
          if(dir_struct->d_type==DT_DIR){
-			file_count++;
-            printf("\033[0G\033[7h\033[36m%s/\033[0m",dir_struct->d_name);
-            temp_struct.name=dir_struct->d_name;
-	        temp=get_path(dir_struct->d_name);
-	        temp_struct=print_details(temp,temp_struct);
-	        files_list.push_back(temp_struct);
+            printf("\033[0G \033[36m/%s \033[0m",dir_struct->d_name);
+            temp=get_path(dir_struct->d_name);
+            print_details(temp);
             fflush(stdout);
          }
          if(dir_struct->d_type==DT_REG){
-			file_count++;
-            printf("\033[0G\033[7h%s",dir_struct->d_name);
-            temp_struct.name=dir_struct->d_name;
-	        temp=get_path(dir_struct->d_name);
-	        temp_struct=print_details(temp,temp_struct);
-	        files_list.push_back(temp_struct);
+            printf("\033[0G%s ",dir_struct->d_name);
+            temp=get_path(dir_struct->d_name);
+            print_details(temp);
             fflush(stdout);
          }
     }
-    file_structure[path]=files_list;
     free(temp);
     printf("\0338");
     fflush(stdout);
-    return file_count;
+    return;
 }	
 
 
 //List Directory-Details of files
-file_data print_details(char * path,file_data temp_struct)
+void print_details(char * path)
 {
-	temp_struct.path=path;
 	struct stat file_stat;
 	if (stat(path, &file_stat) == -1) {
         perror("stat");
         exit(EXIT_FAILURE);
     }
-
-    //Permissions
-    string perm;
-    printf("\033[25G");
-    //printf( (S_ISDIR(file_stat.st_mode)) ? "d" : "-");
-    perm.append((S_ISDIR(file_stat.st_mode)) ? "d" : "-");
-    //printf( (file_stat.st_mode & S_IRUSR) ? "r" : "-");
-    perm.append((file_stat.st_mode & S_IRUSR) ? "r" : "-");
-    //printf( (file_stat.st_mode & S_IWUSR) ? "w" : "-");
-    perm.append((file_stat.st_mode & S_IWUSR) ? "w" : "-");
-    //printf( (file_stat.st_mode & S_IXUSR) ? "x" : "-");
-    perm.append((file_stat.st_mode & S_IXUSR) ? "x" : "-");
-    //printf( (file_stat.st_mode & S_IRGRP) ? "r" : "-");
-    perm.append((file_stat.st_mode & S_IRGRP) ? "r" : "-");
-    //printf( (file_stat.st_mode & S_IWGRP) ? "w" : "-");
-    perm.append((file_stat.st_mode & S_IWGRP) ? "w" : "-");
-    //printf( (file_stat.st_mode & S_IXGRP) ? "x" : "-");
-    perm.append((file_stat.st_mode & S_IXGRP) ? "x" : "-");
-    //printf( (file_stat.st_mode & S_IROTH) ? "r" : "-");
-    perm.append((file_stat.st_mode & S_IROTH) ? "r" : "-");
-    //printf( (file_stat.st_mode & S_IWOTH) ? "w" : "-");
-    perm.append((file_stat.st_mode & S_IWOTH) ? "w" : "-");
-    //printf( (file_stat.st_mode & S_IXOTH) ? "x" : "-");
-    perm.append((file_stat.st_mode & S_IXOTH) ? "x" : "-");
-    printf("%s",perm);
-    temp_struct.permissions=perm;
     
+    //Permissions
+    printf("\033[25G");
+    printf( (S_ISDIR(file_stat.st_mode)) ? "d" : "-");
+    printf( (file_stat.st_mode & S_IRUSR) ? "r" : "-");
+    printf( (file_stat.st_mode & S_IWUSR) ? "w" : "-");
+    printf( (file_stat.st_mode & S_IXUSR) ? "x" : "-");
+    printf( (file_stat.st_mode & S_IRGRP) ? "r" : "-");
+    printf( (file_stat.st_mode & S_IWGRP) ? "w" : "-");
+    printf( (file_stat.st_mode & S_IXGRP) ? "x" : "-");
+    printf( (file_stat.st_mode & S_IROTH) ? "r" : "-");
+    printf( (file_stat.st_mode & S_IWOTH) ? "w" : "-");
+    printf( (file_stat.st_mode & S_IXOTH) ? "x" : "-");
     //user group
     printf("\033[37G");
     printf("%s  ",getpwuid(file_stat.st_uid)->pw_name);
-    temp_struct.user=getpwuid(file_stat.st_uid)->pw_name;
     printf("\033[47G%s",getgrgid(file_stat.st_gid)->gr_name);
-    temp_struct.group=getgrgid(file_stat.st_gid)->gr_name;
-    
     //size
     //to-do :Convert to readable
     printf("\033[57G%lld",(long long) file_stat.st_size);
-    temp_struct.size=(long long)file_stat.st_size;
-    
     //last modified time
     printf("\033[77G%s",ctime(&file_stat.st_mtime));
-    temp_struct.mtime=ctime(&file_stat.st_mtime);
-    
 	fflush(stdout);
-	return temp_struct;
+	return;
 }	
 
 //Test

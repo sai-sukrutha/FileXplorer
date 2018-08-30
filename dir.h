@@ -14,13 +14,12 @@
 #include <grp.h>
 #include <malloc.h>
 #include "termOps.h"
-#include "data.h"
 
 using namespace std;
 
 char * get_path (char []);
 DIR * open_dir(char *);
 int close_dir(DIR *);
-int print_dir(DIR *,char *);
-file_data print_details(char *,file_data);
+void print_dir(DIR *,char *);
+void print_details(char *);
 
