@@ -1,4 +1,7 @@
 #include "termOps.h"
+//#ifndef TERMOPS_H
+//#define TERMOPS_H
+//#endif
 
 struct termios get_mode(int fd)
 {

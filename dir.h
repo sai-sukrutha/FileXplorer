@@ -16,19 +16,14 @@
 #include <vector>
 #include <map>
 #include <stack>
+#include "termOps.h"
+//#ifndef TERMOPS_H
+//#define TERMOPS_H
+//#endif
+
 
 using namespace std;
 
-
-typedef struct{
-	string name;
-	string path;
-	string permissions;
-	string user;
-	string group;
-	long long int size;
-	string mtime;
-}file_data;
 
 char * get_cwd();
 char * get_parent(char *);

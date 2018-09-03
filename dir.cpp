@@ -1,5 +1,7 @@
 #include "dir.h"
-#include "termOps.h"
+//#ifndef DIR_H
+//#define DIR_H
+//#endif
 
 char * get_cwd(){
 	char * cwd=(char *)malloc(1000*sizeof(char));
@@ -95,21 +97,25 @@ int close_dir(DIR * dir){
 vector<char *> print_dir(DIR * dir,char * path){	
 	struct dirent * dir_struct;
 	vector <char *> file_list;
+	printf("\033[31;1m");
 	printf("Folder-%s\n",path);
 	printf("\033[0G");
 	struct  winsize w = get_termsize();
 	for(int i=0;i<w.ws_col;i++)
-	    printf("-");
-	//printf("\033[0G------------------------------------------------------\n\033[1B");
-	printf("\n\033[1B");
+	    printf(".");
+	printf("\033[0m");
+	printf("\033[1B");
+	printf("\033[33;1m\033[0GName\033[35GPermissions\033[49GUser\033[59GGroup\033[69GSize\033[79GModified Time\n\033[0m\033[1B");
 	fflush(stdout);
 	printf("\033[0G");
 	printf("\0337");
-	printf("\033[0G\033[7h.");
+	//printf("\033[0G\033[7h.");
+	printf("\033[0G\033[36m.\033[0m");
 	file_list.push_back(".");
 	//printf("%s\n",path);
 	print_details(path);
-	printf("\033[0G\033[7h..");
+	//printf("\033[0G\033[7h..");
+	printf("\033[0G\033[36m..\033[0m");
 	file_list.push_back("..");
 	char * parent_path=get_parent(path);
 	//printf("%s\n",parent_path);
@@ -132,7 +138,8 @@ vector<char *> print_dir(DIR * dir,char * path){
             continue;
          if(dir_struct->d_type==DT_DIR){
 			file_count++;
-            printf("\033[0G\033[7h\033[36m%s/\033[0m",dir_struct->d_name);
+            //printf("\033[0G\033[7h\033[36m%s/\033[0m",dir_struct->d_name);
+            printf("\033[0G\033[36m%s/\033[0m",dir_struct->d_name);
             file_list.push_back(dir_struct->d_name);
 	        //printf("%s\n",file_path);
 	        print_details(file_path);
@@ -140,7 +147,8 @@ vector<char *> print_dir(DIR * dir,char * path){
          }
          if(dir_struct->d_type==DT_REG){
 			file_count++;
-            printf("\033[0G\033[7h%s",dir_struct->d_name);
+            //printf("\033[0G\033[7h%s",dir_struct->d_name);
+            printf("\033[0G%s",dir_struct->d_name);
             file_list.push_back(dir_struct->d_name);
 	        //printf("%s\n",file_path);
 	        print_details(file_path);
@@ -178,19 +186,17 @@ void print_details(char * path)
     printf( (file_stat.st_mode & S_IXOTH) ? "x" : "-");
     
     //user group
-    printf("\033[47G");
+    printf("\033[49G");
     printf("%s  ",getpwuid(file_stat.st_uid)->pw_name);
-    printf("\033[57G%s",getgrgid(file_stat.st_gid)->gr_name);
+    printf("\033[59G%s",getgrgid(file_stat.st_gid)->gr_name);
     
     //size
-    //to-do :Convert to readable
-    //printf("\033[57G%lld",(long long) file_stat.st_size);
     double size=(double)file_stat.st_size;
     char * fsize=readable_size(size);
-    printf("\033[67G%s",fsize);
+    printf("\033[69G%s",fsize);
     
     //last modified time
-    printf("\033[77G%s",ctime(&file_stat.st_mtime));
+    printf("\033[79G%s",ctime(&file_stat.st_mtime));
     
 	fflush(stdout);
 	return;

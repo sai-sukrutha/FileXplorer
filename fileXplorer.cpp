@@ -4,9 +4,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
+//#include "fileXplorer.h"
 #include "termOps.h"
 #include "dir.h"
 #include "commandMode.h"
+//#ifndef FILEXPLORER_H
+//#define FILEXPLORER_H
+//#endif
 
 #define IN_OUT "/dev/tty"
 using namespace std;
@@ -30,6 +35,9 @@ void usage();
 void print_non_canonical(char *);
 void non_canonical(char *);
 void canonical();
+vector <char *> get_words(char * cmnd);
+void select_command(char * cmnd);
+void goto_dir(char * path);
 
 
 int main(int argc, char **argv)
@@ -52,20 +60,6 @@ int main(int argc, char **argv)
 	//	strcat(curr_path,path);
 	//}
     alter_screen();
-    //printf("Original_path:%s Current path:%s\n",orig_path,curr_path);
-    /*
-    struct  winsize w=get_termsize();
-	for(int i=0;i<w.ws_col;i++)
-	    printf("-");
-    cout<<"File Explorer"<<endl;
-	for(int i=0;i<w.ws_col;i++)
-	    printf("-");
-	cout<<endl;
-	fflush(stdout);
-	cout<<"Press ':' to Command Mode and 'Esc' again to Normal Mode"<<endl;
-	cout<<"Press 'q' to quit"<<endl<<endl;
-	fflush(stdout);
-	*/
 	change_mode(1,fd,get_mode(fd));  
 	LeftStack.push(curr_path);
     print_non_canonical(curr_path);
@@ -74,7 +68,6 @@ int main(int argc, char **argv)
 	while(flag)
 	{
 		read(fd,&c,1);
-		//printf("char is : %c\n",c);
 		fflush(stdout);
 		if(c == ':' && mode == 1){
 		    change_mode(2,fd,get_mode(fd));
@@ -98,7 +91,6 @@ int main(int argc, char **argv)
     return 0;	
 }
 
-
 void usage()
 {
 	const char *use=	"Usage: ./fileXplorer path \n If no path specified pwd is taken\n";
@@ -110,23 +102,24 @@ void print_non_canonical(char * path){
 	pos=0;
 	printf("\033[2J");
 	printf("\033[H");
+	printf("\033[34;1m");
 	struct  winsize w=get_termsize();
 	for(int i=0;i<w.ws_col;i++)
 	    printf("-");
-    cout<<"File Explorer"<<endl;
+    cout<<"FileXplorer"<<endl;
     printf("\033[0G");
 	for(int i=0;i<w.ws_col;i++)
 	    printf("-");
+	printf("\033[0m");
 	cout<<endl;
 	fflush(stdout);
-	cout<<"\033[0GPress ':' to Command Mode and 'Esc' again to Normal Mode"<<endl;
-	cout<<"\033[0GPress 'q' in Normal Mode to quit"<<endl<<endl;
+	cout<<"\033[0G\033[7hPress ':' for Command Mode , 'Esc' to go back to Normal Mode , ";
+	cout<<"\033[7h'q' in Normal Mode to quit";
 	fflush(stdout);
-	//printf("\033[2J");
+	
 	 goto_last();
 	 printf("Normal Mode");
-	 printf("\033[7H");fflush(stdout);
-     //print dir --- 
+	 printf("\033[6H");fflush(stdout);
 	 
 	 char * abs_path=get_path(path);
 	 strcpy(curr_path,path);
@@ -225,7 +218,7 @@ void non_canonical(char * path)
                         print_non_canonical(LeftStack.top());
 				    }
 				    else
-				        printf("RS is empty    ");
+				        //printf("RS is empty    ");
                     break;
                 case 'D':
                     // Left Arrow
@@ -239,7 +232,7 @@ void non_canonical(char * path)
                             print_non_canonical(LeftStack.top());
 				    }
 				    else
-				        printf("LS is empty    ");
+				        //printf("LS is empty    ");
                     break;           
             }
         }
@@ -295,7 +288,7 @@ void canonical()
 	    }
 	    
 	    if(c == 10 || c == 13){ 		
-			select_command(buf,orig_path,curr_path);
+			select_command(buf);
 			goto_last();
             printf("\033[2K");fflush(stdout);
             printf(":");fflush(stdout);
@@ -314,3 +307,99 @@ void canonical()
 	free(buf);
 	return;	    	
 }	
+
+vector <char *> get_words(char * cmnd){
+	vector <char *> arg_list;
+	char * word;
+    word=strtok(cmnd," ");
+    while (word!=NULL)
+    {
+        arg_list.push_back(word);
+        word=strtok(NULL," ");
+    }
+	return arg_list;
+}	
+
+void select_command(char * cmnd){
+	vector <char *> arg_list;
+	arg_list=get_words(cmnd);  //Splitting with spaces
+	int len=arg_list.size();
+	
+	if(strcmp(arg_list[0],"create_dir")==0){
+		if(len != 3){
+		    printf("Error:Incorrect Arguments Usage:create_dir <dir_name> <destination_path>");fflush(stdout);
+		    return;
+		}
+	    create_dir(arg_list[1],arg_list[2],orig_path,curr_path);
+	    return;
+	}
+	if(strcmp(arg_list[0],"create_file")==0){
+		if(len != 3){
+		    perror("Error:Incorrect Arguments Usage:create_file <dir_name> <destination_path>");
+		    return;
+		}
+	    create_file(arg_list[1],arg_list[2],orig_path,curr_path);
+	    return;
+	}
+	if(strcmp(arg_list[0],"delete_dir")==0){
+		if(len != 2){
+		    perror("Error:Incorrect Arguments Usage:delete_dir <directory_path>");
+		    return;
+		}
+	    delete_dir(arg_list[1],orig_path,curr_path);
+	    return;
+	}
+	if(strcmp(arg_list[0],"delete_file")==0){
+		if(len != 2){
+		    perror("Error:Incorrect Arguments Usage:delete_file <file_path>");
+		    return;
+		}
+	    delete_file(arg_list[1],orig_path,curr_path);
+	    return;
+	}
+	if(strcmp(arg_list[0],"goto")==0){
+		if(len != 2){
+		    perror("Error:Incorrect Arguments Usage:goto <directory_path>");
+		    return;
+		}
+	    goto_dir(arg_list[1]);
+	    return;
+	}	
+	if(strcmp(arg_list[0],"rename")==0){
+		if(len != 3){
+		    perror("Error:Incorrect Arguments Usage:rename <old_filename> <new_filename>");
+		    return;
+		}
+		rename_file(arg_list[1],arg_list[2],orig_path);
+		return;
+	}	
+	if(strcmp(arg_list[0],"move")==0){
+		if(len < 3){
+		    perror("Error:Incorrect Arguments Usage:move <source_file(s)> <directory_directory>");
+		    return;
+		}
+		move(arg_list,orig_path,curr_path);
+		return;
+	}
+	fprintf(stderr,"Command not found");//fflush(stdout);
+	return;
+}
+
+//goto command
+void goto_dir(char * path){
+	//Specified Absolute path or '/' will be given
+	char * abs_path=(char *)malloc(1000*sizeof(char));
+	if(strcmp(path,"/")==0)
+	    strcpy(abs_path,orig_path);
+	else{
+		strcpy(abs_path,orig_path);
+		strcat(abs_path,"/");
+		strcat(abs_path,path);
+    }
+	change_mode(1,fd,get_mode(fd));  
+	LeftStack.push(abs_path);
+    print_non_canonical(abs_path);
+    non_canonical(abs_path);
+    return;
+}	
+
