@@ -32,7 +32,7 @@ void change_mode(int want_key,int fd,struct termios old_tio)
      if(want_key == 2)
      {
 		new_tio.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-		new_tio.c_iflag = IGNPAR | ICRNL; 
+		new_tio.c_iflag = IGNPAR | INLCR; 
 		new_tio.c_oflag = 0;
 		new_tio.c_lflag = ICANON;
 		new_tio.c_lflag = ECHO;
@@ -42,11 +42,11 @@ void change_mode(int want_key,int fd,struct termios old_tio)
         new_tio.c_cc[VKILL]    = 0;     /* @ */
         new_tio.c_cc[VEOF]     = 4;     /* Ctrl-d */
         new_tio.c_cc[VTIME]    = 0;     /* inter-character timer unused */
-        new_tio.c_cc[VMIN]     = 3;     /* blocking read until 1 character arrives */
+        new_tio.c_cc[VMIN]     = 3;     /* blocking read until n characters arrives */
         new_tio.c_cc[VSWTC]    = 0;     /* '\0' */
         new_tio.c_cc[VSTART]   = 0;     /* Ctrl-q */ 
         new_tio.c_cc[VSTOP]    = 0;     /* Ctrl-s */
-        new_tio.c_cc[VSUSP]    = 0;     /* Ctrl-z */
+        new_tio.c_cc[VSUSP]    = 1;     /* Ctrl-z */
         new_tio.c_cc[VEOL]     = 0;     /* '\0' */
         new_tio.c_cc[VREPRINT] = 0;     /* Ctrl-r */
         new_tio.c_cc[VDISCARD] = 0;     /* Ctrl-u */
